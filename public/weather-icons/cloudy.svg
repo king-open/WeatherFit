@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+  <defs>
+    <linearGradient id="cloudGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFFFFF"/>
+      <stop offset="100%" style="stop-color:#E0E0E0"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(2, 2)">
+    <path d="M16 16H4c-2.209 0-4-1.791-4-4s1.791-4 4-4c.132 0 .263.007.391.02C4.97 6.586 6.827 5.5 8.937 5.5c2.305 0 4.276 1.331 5.233 3.256.32-.051.645-.076.973-.076 3.314 0 6 2.686 6 6" 
+          fill="url(#cloudGradient)" 
+          stroke="#BDBDBD" 
+          stroke-width="1">
+      <animateTransform
+        attributeName="transform"
+        type="translate"
+        values="0,0; -2,0; 0,0"
+        dur="3s"
+        repeatCount="indefinite"/>
+    </path>
+  </g>
+</svg> 
