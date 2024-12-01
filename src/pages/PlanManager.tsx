@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from '../components/common/Card';
 import { Button } from '../components/common/Button';
-import type { Plan, PlanType } from '../types/plan';
+import type { Plan, PlanType, PlanCategory, PlanTag } from '../types/plan';
 
 const STORAGE_KEY = 'weather-reminder-plans';
 
@@ -72,6 +72,105 @@ const planTypes: { value: PlanType; label: string; icon: JSX.Element }[] = [
   }
 ];
 
+// 修改类别配置，添加颜色
+const planCategories: { value: PlanCategory; label: string; icon: JSX.Element; color: string }[] = [
+  {
+    value: 'work',
+    label: '工作',
+    color: 'bg-blue-100 text-blue-800 hover:bg-blue-200',
+    icon: (
+      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+          d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+      </svg>
+    )
+  },
+  {
+    value: 'exercise',
+    label: '运动',
+    color: 'bg-green-100 text-green-800 hover:bg-green-200',
+    icon: (
+      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+          d="M13 10V3L4 14h7v7l9-11h-7z" />
+      </svg>
+    )
+  },
+  {
+    value: 'social',
+    label: '社交',
+    color: 'bg-purple-100 text-purple-800 hover:bg-purple-200',
+    icon: (
+      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+          d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+      </svg>
+    )
+  },
+  {
+    value: 'study',
+    label: '学习',
+    color: 'bg-red-100 text-red-800 hover:bg-red-200',
+    icon: (
+      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+          d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+      </svg>
+    )
+  },
+  {
+    value: 'travel',
+    label: '旅游',
+    color: 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200',
+    icon: (
+      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+          d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 104 0 2 2 0 012-2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    )
+  },
+  {
+    value: 'other',
+    label: '其他',
+    color: 'bg-gray-100 text-gray-800 hover:bg-gray-200',
+    icon: (
+      <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+          d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
+      </svg>
+    )
+  }
+];
+
+// 添加标签配置
+const planTags: { value: PlanTag; label: string; color: string }[] = [
+  {
+    value: 'important',
+    label: '重要',
+    color: 'bg-red-100 text-red-800'
+  },
+  {
+    value: 'urgent',
+    label: '紧急',
+    color: 'bg-yellow-100 text-yellow-800'
+  },
+  {
+    value: 'longterm',
+    label: '长期',
+    color: 'bg-blue-100 text-blue-800'
+  },
+  {
+    value: 'recurring',
+    label: '重复',
+    color: 'bg-purple-100 text-purple-800'
+  },
+  {
+    value: 'flexible',
+    label: '灵活',
+    color: 'bg-green-100 text-green-800'
+  }
+];
+
 // 存储相关的工具函数
 const storage = {
   getPlans: (): Plan[] => {
@@ -104,6 +203,9 @@ export const PlanManager: React.FC = () => {
     location: '',
     type: 'other'
   });
+  const [selectedTags, setSelectedTags] = useState<PlanTag[]>([]);
+  const [filterCategory, setFilterCategory] = useState<PlanCategory | 'all'>('all');
+  const [filterTags, setFilterTags] = useState<PlanTag[]>([]);
 
   // 从 localStorage 加载计划
   useEffect(() => {
@@ -244,6 +346,164 @@ export const PlanManager: React.FC = () => {
     );
   };
 
+  // 修改新增计划按钮的处理函数
+  const handleAddPlan = () => {
+    // 如果已经选择了类别筛选，则使用该类别作为默认值
+    setNewPlan({
+      title: '',
+      date: new Date().toISOString().split('T')[0],
+      time: '',
+      location: '',
+      type: filterCategory === 'all' ? 'other' : filterCategory,
+      category: filterCategory === 'all' ? 'other' : filterCategory,
+      tags: filterTags // 如果有筛选的标签，也可以默认选中
+    });
+    setShowForm(true);
+  };
+
+  // 修改表单渲染函数
+  const renderForm = () => (
+    <div className="space-y-4">
+      {/* 只在没有选择筛选类别时显示类别选择 */}
+      {filterCategory === 'all' && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">类别</label>
+          <div className="flex flex-wrap gap-2">
+            {planCategories.map(category => (
+              <button
+                key={category.value}
+                type="button"
+                onClick={() => setNewPlan({...newPlan, category: category.value})}
+                className={`
+                  flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium
+                  transition-colors duration-200
+                  ${newPlan.category === category.value 
+                    ? category.color.replace('hover:', '')
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }
+                `}
+              >
+                <span className={`
+                  flex items-center justify-center
+                  ${newPlan.category === category.value ? 'text-current' : 'text-gray-500'}
+                `}>
+                  {category.icon}
+                </span>
+                <span>{category.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 只在没有选择筛选标签时显示标签选择 */}
+      {filterTags.length === 0 && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700">标签</label>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {planTags.map(tag => (
+              <button
+                key={tag.value}
+                type="button"
+                onClick={() => {
+                  const isSelected = selectedTags.includes(tag.value);
+                  setSelectedTags(isSelected
+                    ? selectedTags.filter(t => t !== tag.value)
+                    : [...selectedTags, tag.value]
+                  );
+                }}
+                className={`
+                  px-3 py-1 rounded-full text-sm font-medium transition-colors duration-200
+                  ${selectedTags.includes(tag.value) 
+                    ? tag.color 
+                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }
+                `}
+              >
+                {tag.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  // 添加筛选功能
+  const renderFilters = () => (
+    <div className="mb-6 space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">按类别筛选</label>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setFilterCategory('all')}
+            className={`
+              px-4 py-2 rounded-lg text-sm font-medium
+              ${filterCategory === 'all' 
+                ? 'bg-primary-light text-white' 
+                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }
+            `}
+          >
+            全部
+          </button>
+          {planCategories.map(category => (
+            <button
+              key={category.value}
+              onClick={() => setFilterCategory(category.value)}
+              className={`
+                px-4 py-2 rounded-lg text-sm font-medium flex items-center space-x-2
+                ${filterCategory === category.value 
+                  ? 'bg-primary-light text-white' 
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }
+              `}
+            >
+              {category.icon}
+              <span>{category.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">按标签筛选</label>
+        <div className="flex flex-wrap gap-2">
+          {planTags.map(tag => (
+            <button
+              key={tag.value}
+              onClick={() => {
+                const isSelected = filterTags.includes(tag.value);
+                setFilterTags(isSelected
+                  ? filterTags.filter(t => t !== tag.value)
+                  : [...filterTags, tag.value]
+                );
+              }}
+              className={`
+                px-3 py-1 rounded-full text-sm font-medium
+                ${filterTags.includes(tag.value) ? tag.color : 'bg-gray-100 text-gray-600'}
+                transition-colors duration-200
+              `}
+            >
+              {tag.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  // 过滤计划
+  const filteredPlans = plans.filter(plan => {
+    if (filterCategory !== 'all' && plan.category !== filterCategory) {
+      return false;
+    }
+    if (filterTags.length > 0 && !filterTags.some(tag => plan.tags.includes(tag))) {
+      return false;
+    }
+    return true;
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -252,13 +512,13 @@ export const PlanManager: React.FC = () => {
           <p className="text-sm text-gray-500 mt-1">共 {plans.length} 个计划</p>
         </div>
         <Button 
-          onClick={() => setShowForm(true)}
+          onClick={handleAddPlan}  // 修改这里，使用新的处理函数
           className="flex items-center space-x-2"
         >
           <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
           </svg>
-          <span>新增计划</span>
+          <span>新增{filterCategory !== 'all' ? planCategories.find(c => c.value === filterCategory)?.label : ''}计划</span>
         </Button>
       </div>
 
@@ -344,6 +604,8 @@ export const PlanManager: React.FC = () => {
                 </select>
               </div>
 
+              {renderForm()}
+
               <div className="flex justify-end space-x-4 pt-4">
                 <Button variant="secondary" type="button" onClick={handleCloseForm}>
                   取消
@@ -356,6 +618,8 @@ export const PlanManager: React.FC = () => {
           </Card>
         </div>
       )}
+
+      {renderFilters()}
 
       {/* 计划列表 */}
       <div className="grid gap-6">
