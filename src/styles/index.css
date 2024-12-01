@@ -28,3 +28,17 @@
   --secondary-light: #9F7AEA;
   --secondary-dark: #6B46C1;
 } 
+
+/* Swiper 样式 */
+.weather-swiper {
+  padding: 20px 0;
+}
+
+.weather-swiper .swiper-button-next,
+.weather-swiper .swiper-button-prev {
+  color: theme('colors.primary.DEFAULT');
+}
+
+.weather-swiper .swiper-pagination-bullet-active {
+  background-color: theme('colors.primary.DEFAULT');
+} 

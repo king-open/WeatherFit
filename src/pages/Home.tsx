@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { WeatherCard } from '../components/weather/WeatherCard';
 import { Card } from '../components/common/Card';
-import { getWeather, getWeatherIcon, getClothingSuggestion } from '../services/weather';
+import { getWeather, getWeatherIcon } from '../services/weather';
+import { getClothingSuggestions } from '../services/clothing';
 import type { Plan } from '../types/plan';
+import { WeatherTrend } from '../components/weather/WeatherTrend';
 
 interface WeatherState {
   current: {
@@ -20,30 +23,43 @@ interface WeatherState {
     nightWeather: string;
     dayTemp: number;
     nightTemp: number;
+    dayWind: string;
+    nightWind: string;
+    dayPower: string;
+    nightPower: string;
   }>;
 }
 
-const mockPlans: Plan[] = [
-  {
-    id: "1",
-    title: "晨跑",
-    date: "2024-03-20",
-    time: "07:00",
-    location: "公园",
-    type: "sports"
+// 从 localStorage 获取计划
+const getStoredPlans = () => {
+  try {
+    const plans = localStorage.getItem('weather-reminder-plans');
+    if (!plans) return [];
+    
+    const parsedPlans = JSON.parse(plans);
+    // 确保日期格式正确
+    const today = new Date().toISOString().split('T')[0];
+    // 过滤出今天的计划并按时间排序
+    return parsedPlans
+      .filter((plan: Plan) => plan.date === today)
+      .sort((a: Plan, b: Plan) => a.time.localeCompare(b.time));
+  } catch (error) {
+    console.error('Failed to load plans:', error);
+    return [];
   }
-];
+};
 
 export const Home: React.FC = () => {
   const [weatherData, setWeatherData] = useState<WeatherState | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [todayPlans, setTodayPlans] = useState<Plan[]>([]);
 
   useEffect(() => {
     const fetchWeather = async () => {
       try {
         setLoading(true);
-        const data = await getWeather('331024'); // 修改为仙居县的城市编码
+        const data = await getWeather('331024');
         setWeatherData(data);
         setError(null);
       } catch (err) {
@@ -55,9 +71,39 @@ export const Home: React.FC = () => {
     };
 
     fetchWeather();
-    // 每30分钟更新一次天气数据
     const interval = setInterval(fetchWeather, 30 * 60 * 1000);
     return () => clearInterval(interval);
+  }, []);
+
+  // 加载今日计划
+  const loadTodayPlans = () => {
+    const plans = getStoredPlans();
+    console.log('Today plans:', plans); // 添加调试日志
+    setTodayPlans(plans);
+  };
+
+  // 添加 localStorage 变化监听
+  useEffect(() => {
+    loadTodayPlans(); // 初始加载
+
+    // 创建一个 StorageEvent 监听器
+    const handleStorageChange = () => {
+      loadTodayPlans();
+    };
+
+    // 添加自定义事件监听器
+    window.addEventListener('planUpdated', handleStorageChange);
+    // 监听 localStorage 变化
+    window.addEventListener('storage', handleStorageChange);
+
+    // 每分钟刷新一次计划（处理跨天情况）
+    const interval = setInterval(loadTodayPlans, 60000);
+
+    return () => {
+      window.removeEventListener('planUpdated', handleStorageChange);
+      window.removeEventListener('storage', handleStorageChange);
+      clearInterval(interval);
+    };
   }, []);
 
   if (loading) {
@@ -70,15 +116,11 @@ export const Home: React.FC = () => {
 
   if (error) {
     return (
-      <div className="text-center text-red-500 p-4">
-        {error}
-      </div>
+      <div className="text-center text-red-500 p-4">{error}</div>
     );
   }
 
-  if (!weatherData) {
-    return null;
-  }
+  if (!weatherData) return null;
 
   const { current, forecast } = weatherData;
 
@@ -105,68 +147,46 @@ export const Home: React.FC = () => {
         <div>
           <h2 className="text-2xl font-bold mb-4">穿衣建议</h2>
           <Card>
-            <div className="space-y-3">
-              <div className="flex items-center space-x-3">
-                <span className="p-2 bg-primary-light rounded-full text-white">
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </span>
-                <p className="text-gray-600">{getClothingSuggestion(current.temperature)}</p>
-              </div>
-              <div className="flex items-center space-x-3">
-                <span className="p-2 bg-primary-light rounded-full text-white">
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
-                  </svg>
-                </span>
-                <p className="text-gray-600">
-                  {current.weather.includes('雨') ? '记得带伞' : '无需带伞'}
-                </p>
-              </div>
+            <div className="space-y-4">
+              {getClothingSuggestions(current.temperature, current.weather).map((suggestion, index) => (
+                <div key={index} className="text-sm text-gray-600 py-2 border-b border-gray-100 last:border-0">
+                  {suggestion}
+                </div>
+              ))}
+              <Link 
+                to="/settings" 
+                className="flex items-center space-x-2 text-sm text-primary-light hover:text-primary-dark mt-4"
+              >
+                <span>自定义穿衣建议</span>
+              </Link>
             </div>
           </Card>
         </div>
       </div>
 
-      {/* 天气预报 */}
+      {/* 一周天气趋势 */}
       <div>
-        <h2 className="text-2xl font-bold mb-4">未来天气</h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {forecast.slice(1).map((day) => (
-            <Card key={day.date}>
-              <div className="text-center">
-                <p className="text-sm text-gray-500">{day.date}</p>
-                <div className="my-2">
-                  <p>{day.dayWeather}</p>
-                  <p className="text-sm text-gray-500">{day.nightWeather}</p>
-                </div>
-                <p className="font-semibold">
-                  {day.dayTemp}° / {day.nightTemp}°
-                </p>
-              </div>
-            </Card>
-          ))}
-        </div>
+        <h2 className="text-2xl font-bold mb-4">多日预报</h2>
+        <WeatherTrend forecast={forecast} />
       </div>
 
       {/* 今日计划 */}
       <div>
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold">今日计划</h2>
-          <button className="text-primary-light hover:text-primary-dark">
-            查看全部
-          </button>
+          <h2 className="text-2xl font-bold">今日计划 ({todayPlans.length})</h2>
+          <Link to="/plans" className="text-primary-light hover:text-primary-dark">
+            管理计划
+          </Link>
         </div>
         <Card>
-          {mockPlans.length > 0 ? (
+          {todayPlans.length > 0 ? (
             <div className="divide-y divide-gray-200">
-              {mockPlans.map(plan => (
+              {todayPlans.map(plan => (
                 <div key={plan.id} className="py-4 first:pt-0 last:pb-0">
                   <div className="flex justify-between items-start">
                     <div>
-                      <h3 className="font-semibold">{plan.title}</h3>
-                      <p className="text-sm text-gray-600">{plan.time} @ {plan.location}</p>
+                      <h3 className="font-semibold text-gray-900">{plan.title}</h3>
+                      <p className="text-sm text-gray-600">{plan.time} · {plan.location}</p>
                     </div>
                     <span className="px-2 py-1 text-sm rounded-full bg-primary-light text-white">
                       {plan.type}
@@ -176,7 +196,15 @@ export const Home: React.FC = () => {
               ))}
             </div>
           ) : (
-            <p className="text-gray-500 text-center py-4">暂无计划</p>
+            <div className="text-center py-8">
+              <p className="text-gray-500">今日暂无计划</p>
+              <Link 
+                to="/plans" 
+                className="mt-2 inline-block text-primary-light hover:text-primary-dark"
+              >
+                添加计划
+              </Link>
+            </div>
           )}
         </Card>
       </div>
