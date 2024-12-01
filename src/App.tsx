@@ -121,7 +121,7 @@ const App: React.FC = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
-              <span className="text-xl font-semibold text-primary">Weather</span>
+              <span className="text-xl font-semibold text-primary">WeatherFit</span>
             </div>
           </div>
 
@@ -141,11 +141,11 @@ const App: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="h-8 w-8 rounded-full bg-primary-light flex items-center justify-center text-white">
-                    {getAuthState().user.username[0].toUpperCase()}
+                    {getAuthState().user?.username?.[0]?.toUpperCase() ?? '?'}
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium">{getAuthState().user.username}</p>
-                    <p className="text-xs text-gray-500">{getAuthState().user.email}</p>
+                    <p className="text-sm font-medium">{getAuthState().user?.username ?? '未知用户'}</p>
+                    <p className="text-xs text-gray-500">{getAuthState().user?.email ?? '未知邮箱'}</p>
                   </div>
                 </div>
                 <button
@@ -268,7 +268,7 @@ const App: React.FC = () => {
           </div>
         </header>
 
-        {/* 页面内容 */}
+        {/* 页内容 */}
         <main className="flex-1 overflow-y-auto bg-gray-50 p-6">
           <Routes>
             <Route path="/login" element={<Login />} />

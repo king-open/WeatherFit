@@ -16,7 +16,7 @@ const vuetify = createVuetify({
   }
 })
 
-const VuetifyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const VuetifyProvider = ({ children }: { children: React.ReactNode }) => {
   return <div data-app>{children}</div>
 }
 
@@ -25,7 +25,9 @@ if (!rootElement?.innerHTML) {
   const root = ReactDOM.createRoot(rootElement!)
   root.render(
     <React.StrictMode>
-      <VuetifyProvider children={<App />} />
+      <VuetifyProvider>
+        <App />
+      </VuetifyProvider>
     </React.StrictMode>
   )
 }

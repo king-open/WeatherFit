@@ -53,7 +53,7 @@ export const getWeather = async (city: string) => {
   try {
     // 实时天气
     const liveRes = await axios.get<AmapWeatherResponse>(
-      `https://restapi.amap.com/v3/weather/weatherInfo`,
+      'https://restapi.amap.com/v3/weather/weatherInfo',
       {
         params: {
           key: AMAP_KEY,
@@ -65,7 +65,7 @@ export const getWeather = async (city: string) => {
 
     // 天气预报
     const forecastRes = await axios.get<AmapWeatherForecastResponse>(
-      `https://restapi.amap.com/v3/weather/weatherInfo`,
+      'https://restapi.amap.com/v3/weather/weatherInfo',
       {
         params: {
           key: AMAP_KEY,
@@ -75,36 +75,45 @@ export const getWeather = async (city: string) => {
       }
     );
 
-    if (liveRes.data.status === '1' && forecastRes.data.status === '1') {
-      const live = liveRes.data.lives[0];
-      const forecast = forecastRes.data.forecasts[0];
-
-      return {
-        current: {
-          temperature: parseInt(live.temperature),
-          humidity: parseInt(live.humidity),
-          windDirection: live.winddirection,
-          windPower: live.windpower,
-          weather: live.weather,
-          reportTime: live.reporttime,
-          city: live.city
-        },
-        forecast: forecast.casts.map(cast => ({
-          date: cast.date,
-          dayWeather: cast.dayweather,
-          nightWeather: cast.nightweather,
-          dayTemp: parseInt(cast.daytemp),
-          nightTemp: parseInt(cast.nighttemp),
-          dayWind: cast.daywind,
-          nightWind: cast.nightwind,
-          dayPower: cast.daypower,
-          nightPower: cast.nightpower
-        }))
-      };
+    // 检查响应状态和数据
+    if (liveRes.data.status !== '1' || !liveRes.data.lives?.length) {
+      throw new Error('获取实时天气数据失败: ' + liveRes.data.info);
     }
-    throw new Error('获取天气数据失败');
+
+    if (forecastRes.data.status !== '1' || !forecastRes.data.forecasts?.length) {
+      throw new Error('获取天气预报数据失败: ' + forecastRes.data.info);
+    }
+
+    const live = liveRes.data.lives[0];
+    const forecast = forecastRes.data.forecasts[0];
+
+    return {
+      current: {
+        temperature: parseInt(live.temperature) || 0,
+        humidity: parseInt(live.humidity) || 0,
+        windDirection: live.winddirection || '无数据',
+        windPower: live.windpower || '无数据',
+        weather: live.weather || '未知',
+        reportTime: live.reporttime || new Date().toISOString(),
+        city: live.city || '未知城市'
+      },
+      forecast: forecast.casts.map(cast => ({
+        date: cast.date,
+        dayWeather: cast.dayweather,
+        nightWeather: cast.nightweather,
+        dayTemp: parseInt(cast.daytemp) || 0,
+        nightTemp: parseInt(cast.nighttemp) || 0,
+        dayWind: cast.daywind,
+        nightWind: cast.nightwind,
+        dayPower: cast.daypower,
+        nightPower: cast.nightpower
+      }))
+    };
   } catch (error) {
     console.error('Weather API Error:', error);
+    if (axios.isAxiosError(error)) {
+      throw new Error(`获取天气数据失败: ${error.response?.data?.info || error.message}`);
+    }
     throw error;
   }
 };

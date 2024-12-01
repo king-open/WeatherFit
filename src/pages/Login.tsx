@@ -38,7 +38,7 @@ export const Login: React.FC = () => {
           return prev - 1;
         });
       }, 1000);
-    } catch (err) {
+    } catch (_) {
       setError('发送验证码失败，请稍后重试');
     } finally {
       setLoading(false);
@@ -63,7 +63,7 @@ export const Login: React.FC = () => {
           }, 2000);
 
           return () => clearInterval(checkInterval);
-        } catch (err) {
+        } catch (_) {
           setError('获取二维码失败，请刷新重试');
         }
       };
