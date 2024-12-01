@@ -16,7 +16,7 @@ interface WeatherCardProps {
 
 export const WeatherCard: React.FC<WeatherCardProps> = ({ weather }) => {
   return (
-    <Card>
+    <Card className="weather-card">
       <div className="flex items-center justify-between">
         <div>
           {weather.city && (
