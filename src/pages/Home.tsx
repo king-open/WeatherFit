@@ -49,17 +49,30 @@ const getStoredPlans = () => {
   }
 };
 
+// 添加城市配置
+const cities = [
+  { code: '331024', name: '仙居' },
+  { code: '330100', name: '杭州' },
+  { code: '310100', name: '上海' },
+  { code: '110100', name: '北京' },
+  { code: '440100', name: '广州' },
+  { code: '320100', name: '南京' },
+  { code: '330200', name: '宁波' }
+];
+
 export const Home: React.FC = () => {
+  const [selectedCity, setSelectedCity] = useState(cities[0]);
   const [weatherData, setWeatherData] = useState<WeatherState | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [todayPlans, setTodayPlans] = useState<Plan[]>([]);
+  const [showCitySelect, setShowCitySelect] = useState(false);
 
   useEffect(() => {
     const fetchWeather = async () => {
       try {
         setLoading(true);
-        const data = await getWeather('331024');
+        const data = await getWeather(selectedCity.code);
         setWeatherData(data);
         setError(null);
       } catch (err) {
@@ -73,7 +86,7 @@ export const Home: React.FC = () => {
     fetchWeather();
     const interval = setInterval(fetchWeather, 30 * 60 * 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [selectedCity]);
 
   // 加载今日计划
   const loadTodayPlans = () => {
@@ -129,7 +142,47 @@ export const Home: React.FC = () => {
       {/* 天气概览卡片 */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2">
-          <h2 className="text-2xl font-bold mb-4">今日天气</h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-2xl font-bold">今日天气</h2>
+            <div className="relative">
+              <button
+                onClick={() => setShowCitySelect(!showCitySelect)}
+                className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 shadow-sm"
+              >
+                <span>{selectedCity.name}</span>
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {/* 城市选择下拉菜单 */}
+              {showCitySelect && (
+                <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10">
+                  <div className="py-1" role="menu">
+                    {cities.map(city => (
+                      <button
+                        key={city.code}
+                        onClick={() => {
+                          setSelectedCity(city);
+                          setShowCitySelect(false);
+                        }}
+                        className={`
+                          w-full text-left px-4 py-2 text-sm
+                          ${selectedCity.code === city.code 
+                            ? 'bg-primary-light text-white' 
+                            : 'text-gray-700 hover:bg-gray-100'
+                          }
+                        `}
+                        role="menuitem"
+                      >
+                        {city.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
           <WeatherCard
             weather={{
               temperature: current.temperature,
