@@ -281,12 +281,31 @@ export const PlanManager: React.FC = () => {
     });
   };
 
+  // 获取今天的日期（去掉时间部分）
+  const today = new Date().toISOString().split('T')[0];
+
   // 获取今天的计划
-  const todayPlans = plans.filter(plan => plan.date === new Date().toISOString().split('T')[0]);
-  // 获取未来的计划
-  const futurePlans = plans.filter(plan => plan.date > new Date().toISOString().split('T')[0]);
-  // 获取过去的计划
-  const pastPlans = plans.filter(plan => plan.date < new Date().toISOString().split('T')[0]);
+  const todayPlans = plans.filter(plan => plan.date === today);
+  
+  // 获取未来的计划（日期大于今天）
+  const futurePlans = plans.filter(plan => {
+    const planDate = new Date(plan.date);
+    const todayDate = new Date(today);
+    // 重置时间为 00:00:00，只比较日期
+    planDate.setHours(0, 0, 0, 0);
+    todayDate.setHours(0, 0, 0, 0);
+    return planDate > todayDate;
+  });
+  
+  // 获取过去的计划（日期小于今天）
+  const pastPlans = plans.filter(plan => {
+    const planDate = new Date(plan.date);
+    const todayDate = new Date(today);
+    // 重置时间为 00:00:00，只比较日期
+    planDate.setHours(0, 0, 0, 0);
+    todayDate.setHours(0, 0, 0, 0);
+    return planDate < todayDate;
+  });
 
   const renderPlanCard = (plan: Plan) => {
     const planType = planTypes.find(t => t.value === plan.type);

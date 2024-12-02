@@ -68,23 +68,27 @@ const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
 const App: React.FC = () => {
   const navigate = useNavigate();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(!isMobileOrTablet());
+  const location = useLocation();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
 
-  // 监听窗口大小变化
+  // 监听路由变化和窗口大小变化
   useEffect(() => {
     const handleResize = () => {
-      if (isMobileOrTablet()) {
+      // 在登录页面时始终保持侧边栏收起
+      if (location.pathname === '/login') {
         setIsSidebarOpen(false);
       } else {
-        setIsSidebarOpen(true);
+        // 在其他页面根据屏幕大小决定侧边栏状态
+        setIsSidebarOpen(!isMobileOrTablet());
       }
     };
 
+    handleResize(); // 初始化
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [location.pathname]);
 
   // 加载通知
   useEffect(() => {
