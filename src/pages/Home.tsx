@@ -4,8 +4,9 @@ import { WeatherCard } from '../components/weather/WeatherCard';
 import { Card } from '../components/common/Card';
 import { getWeather, getWeatherIcon } from '../services/weather';
 import { getClothingSuggestions } from '../services/clothing';
-import type { Plan } from '../types/plan';
 import { WeatherTrend } from '../components/weather/WeatherTrend';
+import { AIAssistant } from '../components/assistant/AIAssistant';
+import { NewsSection } from '../components/news/NewsSection';
 
 interface WeatherState {
   current: {
@@ -30,25 +31,6 @@ interface WeatherState {
   }>;
 }
 
-// 从 localStorage 获取计划
-const getStoredPlans = () => {
-  try {
-    const plans = localStorage.getItem('weather-reminder-plans');
-    if (!plans) return [];
-    
-    const parsedPlans = JSON.parse(plans);
-    // 确保日期格式正确
-    const today = new Date().toISOString().split('T')[0];
-    // 过滤出今天的计划并按时间排序
-    return parsedPlans
-      .filter((plan: Plan) => plan.date === today)
-      .sort((a: Plan, b: Plan) => a.time.localeCompare(b.time));
-  } catch (error) {
-    console.error('Failed to load plans:', error);
-    return [];
-  }
-};
-
 // 添加城市配置
 const cities = [
   { code: '331024', name: '仙居' },
@@ -65,7 +47,6 @@ export const Home: React.FC = () => {
   const [weatherData, setWeatherData] = useState<WeatherState | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [todayPlans, setTodayPlans] = useState<Plan[]>([]);
   const [showCitySelect, setShowCitySelect] = useState(false);
 
   useEffect(() => {
@@ -87,37 +68,6 @@ export const Home: React.FC = () => {
     const interval = setInterval(fetchWeather, 30 * 60 * 1000);
     return () => clearInterval(interval);
   }, [selectedCity]);
-
-  // 加载今日计划
-  const loadTodayPlans = () => {
-    const plans = getStoredPlans();
-    console.log('Today plans:', plans); // 添加调试日志
-    setTodayPlans(plans);
-  };
-
-  // 添加 localStorage 变化监听
-  useEffect(() => {
-    loadTodayPlans(); // 初始加载
-
-    // 创建一个 StorageEvent 监听器
-    const handleStorageChange = () => {
-      loadTodayPlans();
-    };
-
-    // 添加自定义事件监听器
-    window.addEventListener('planUpdated', handleStorageChange);
-    // 监听 localStorage 变化
-    window.addEventListener('storage', handleStorageChange);
-
-    // 每分钟刷新一次计划（处理跨天情况）
-    const interval = setInterval(loadTodayPlans, 60000);
-
-    return () => {
-      window.removeEventListener('planUpdated', handleStorageChange);
-      window.removeEventListener('storage', handleStorageChange);
-      clearInterval(interval);
-    };
-  }, []);
 
   if (loading) {
     return (
@@ -223,44 +173,21 @@ export const Home: React.FC = () => {
         <WeatherTrend forecast={forecast} />
       </div>
 
-      {/* 今日计划 */}
-      <div>
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold">今日计划 ({todayPlans.length})</h2>
-          <Link to="/plans" className="text-primary-light hover:text-primary-dark">
-            管理计划
-          </Link>
-        </div>
-        <Card>
-          {todayPlans.length > 0 ? (
-            <div className="divide-y divide-gray-200">
-              {todayPlans.map(plan => (
-                <div key={plan.id} className="py-4 first:pt-0 last:pb-0">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-semibold text-gray-900">{plan.title}</h3>
-                      <p className="text-sm text-gray-600">{plan.time} · {plan.location}</p>
-                    </div>
-                    <span className="px-2 py-1 text-sm rounded-full bg-primary-light text-white">
-                      {plan.type}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-gray-500">今日暂无计划</p>
-              <Link 
-                to="/plans" 
-                className="mt-2 inline-block text-primary-light hover:text-primary-dark"
-              >
-                添加计划
-              </Link>
-            </div>
-          )}
-        </Card>
-      </div>
+      {/* AI 助手 */}
+      {weatherData && (
+        <AIAssistant
+          temperature={weatherData.current.temperature}
+          weather={weatherData.current.weather}
+        />
+      )}
+
+      {/* 新闻推荐 */}
+      {weatherData && (
+        <NewsSection
+          temperature={weatherData.current.temperature}
+          weather={weatherData.current.weather}
+        />
+      )}
     </div>
   );
 }; 
